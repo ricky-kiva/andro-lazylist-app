@@ -1,6 +1,7 @@
 package com.rickyslash.lazylistapp
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,20 +29,30 @@ import com.rickyslash.lazylistapp.model.HeroesData
 import com.rickyslash.lazylistapp.ui.theme.LazyListAppTheme
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.text.style.TextAlign
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HeroList(modifier: Modifier = Modifier) {
+
+    val groupedHeroes = HeroesData.heroes
+        .sortedBy { it.name }
+        .groupBy { it.name[0] }
+
     Box(modifier = modifier) {
         val scope = rememberCoroutineScope() // to run scope manually on button click
         val listState = rememberLazyListState() // to remember LazyList's state
         val showButton: Boolean by remember {
             derivedStateOf { listState.firstVisibleItemIndex > 0 } // change state according given condition
         }
-        LazyColumn(state = listState) {
-            items(HeroesData.heroes, key = { it.id }) { hero ->
-                HeroListItem(name = hero.name, photoUrl = hero.photoUrl, modifier = Modifier
-                    .fillMaxWidth()
-                )
+        LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 80.dp)) {
+            groupedHeroes.forEach { (initial, heroes) ->
+                stickyHeader { CharHeader(initial) }
+                items(heroes, key = { it.id }) { hero ->
+                    HeroListItem(name = hero.name, photoUrl = hero.photoUrl, modifier = Modifier
+                        .fillMaxWidth()
+                    )
+                }
             }
         }
         AnimatedVisibility(
@@ -56,6 +67,20 @@ fun HeroList(modifier: Modifier = Modifier) {
                 scope.launch { listState.scrollToItem(index = 0) }
             })
         }
+    }
+}
+
+@Composable
+fun CharHeader(char: Char, modifier: Modifier = Modifier) {
+    Surface(color = MaterialTheme.colors.primary, modifier = modifier) {
+        Text(
+            text = char.toString(),
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        )
     }
 }
 
